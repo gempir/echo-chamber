@@ -43,7 +43,8 @@ var (
 )
 
 func main() {
-	time.Sleep(time.Second * 10)
+	// wait for ES to start
+	time.Sleep(time.Second * 20)
 
 	e := echo.New()
 
