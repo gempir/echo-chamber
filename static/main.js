@@ -29,10 +29,14 @@ if ('speechSynthesis' in window) {
     }
 }
 
+var volumeInput = document.getElementById('volume');
+
+
 function speak(text) {
     var msg = new SpeechSynthesisUtterance();
     var voices = window.speechSynthesis.getVoices();
     msg.voice = voices[$('#voices').val()];
+    msg.volume = parseFloat($('#volume').val());
     msg.text = text;
     
     speechSynthesis.speak(msg);

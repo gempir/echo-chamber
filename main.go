@@ -149,7 +149,7 @@ func search(c echo.Context) error {
 func getTopChannels() []Stream {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", "https://api.twitch.tv/kraken/streams?limit=30", nil)
-	req.Header.Set("Client-Id", "cazb1iyx9igrhk42ruep3e6dit84id")
+	req.Header.Set("Client-Id", getEnv("CLIENTID"))
 	res, _ := client.Do(req)
 
 	contents, _ := ioutil.ReadAll(res.Body)
