@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/gempir/go-twitch-irc"
-	elastic "gopkg.in/olivere/elastic.v5"
+
+	"gopkg.in/olivere/elastic.v5"
 )
 
 type msg struct {
@@ -19,35 +20,36 @@ type msg struct {
 	Time     time.Time `json:"time"`
 }
 
-// Streams asd
+// Streams struct
 type Streams struct {
 	Streams []Stream `json:"streams"`
 }
 
-// Stream asd
+// Stream struct
 type Stream struct {
 	Channel Channel `json:"channel"`
 }
 
-// Channel asd
+// Channel struct
 type Channel struct {
 	Name string `json:"name"`
 }
 
 func main() {
-	time.Sleep(time.Second * 5)
 	ctx := context.Background()
 
-	client, err := elastic.NewClient(elastic.SetURL("http://" + getEnv("ESHOST", "127.0.0.1:9200")))
+	client, err := elastic.NewClient(
+		elastic.SetBasicAuth(getEnv("ESUSER"), getEnv("ESPASS")),
+		elastic.SetURL(getEnv("ESURL")),
+		elastic.SetSniff(false),
+	)
 	if err != nil {
-		// Handle error
 		panic(err)
 	}
 
 	tclient := twitch.NewClient("justinfan123123", "oauth:123123123")
 
 	tclient.OnNewMessage(func(channel string, user twitch.User, message twitch.Message) {
-		// Add a document to the index
 		esMessage := msg{
 			Text:     message.Text,
 			Username: user.Username,
@@ -104,9 +106,9 @@ func getTopChannels() []Stream {
 	return streams.Streams
 }
 
-func getEnv(key, fallback string) string {
+func getEnv(key string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
-	return fallback
+	panic("Missing env var: " + key)
 }

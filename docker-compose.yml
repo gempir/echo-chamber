@@ -5,29 +5,12 @@ services:
     environment:
       LOGLEVEL: error
 
-  elasticsearch:
-    image: elasticsearch
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      ES_JAVA_OPTS: "-Xmx768m -Xms768m"
-    volumes:
-     - /var/es/data:/usr/share/elasticsearch/data
-
-  cerebro:
-    image: yannart/cerebro:latest
-    ports:
-      - "9000:9000"
-
   echo-chamber:
     build: ./
     depends_on:
       - relaybroker
-      - elasticsearch
-    ports:
-      - "8035:8035"
+    env_file:
+      - chamber.env
     environment:
       IRCHOST: relaybroker:3333
-      ESHOST: elasticsearch:9200
   
