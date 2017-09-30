@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gempir/go-twitch-irc"
+	"github.com/labstack/echo"
 
 	"gopkg.in/olivere/elastic.v5"
 )
@@ -35,10 +38,26 @@ type Channel struct {
 	Name string `json:"name"`
 }
 
+var (
+	esClient *elastic.Client
+)
+
 func main() {
+	e := echo.New()
+
+	t := &Template{
+		templates: template.Must(template.ParseGlob("views/*.html")),
+	}
+	e.Renderer = t
+
+	e.GET("/", home)
+	e.Static("/static", "static")
+	e.GET("/search", search)
+
 	ctx := context.Background()
 
-	client, err := elastic.NewClient(
+	var err error
+	esClient, err = elastic.NewClient(
 		elastic.SetBasicAuth(getEnv("ESUSER"), getEnv("ESPASS")),
 		elastic.SetURL(getEnv("ESURL")),
 		elastic.SetSniff(false),
@@ -56,7 +75,7 @@ func main() {
 			Time:     message.Time,
 		}
 
-		_, err := client.Index().
+		_, err := esClient.Index().
 			Index(channel).
 			Type("doc").
 			BodyJson(esMessage).
@@ -90,7 +109,41 @@ func main() {
 	go tclient.Join("nanilul")
 	go tclient.Join("xfsn_saber")
 
-	tclient.Connect()
+	go tclient.Connect()
+
+	e.Logger.Fatal(e.Start(":1323"))
+}
+
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+func home(c echo.Context) error {
+
+	return c.Render(http.StatusOK, "index", "world")
+}
+
+func search(c echo.Context) error {
+	ctx := context.Background()
+	query := c.QueryParam("q")
+
+	simpleQueryStringQuery := elastic.NewSimpleQueryStringQuery(query)
+	randomFunction := elastic.NewRandomFunction()
+	randomFunction.Weight(100000000)
+
+	fnScoreQuery := elastic.NewFunctionScoreQuery()
+	fnScoreQuery.Add(simpleQueryStringQuery, randomFunction)
+
+	result, err := esClient.Search().Query(fnScoreQuery).Size(1).Do(ctx)
+	if err != nil {
+		c.Error(err)
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
 
 func getTopChannels() []Stream {

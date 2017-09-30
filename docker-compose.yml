@@ -11,6 +11,8 @@ services:
       - relaybroker
     env_file:
       - chamber.env
+    ports:
+      - "1323:1323"
     environment:
       IRCHOST: relaybroker:3333
   
