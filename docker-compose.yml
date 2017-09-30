@@ -5,10 +5,18 @@ services:
     environment:
       LOGLEVEL: error
 
+  elasticsearch:
+    image: elasticsearch
+    environment:
+      ES_JAVA_OPTS: "-Xmx768m -Xms768m"
+    volumes:
+     - /var/es/data:/usr/share/elasticsearch/data
+
   echo-chamber:
     build: ./
     depends_on:
       - relaybroker
+      - elasticsearch
     env_file:
       - chamber.env
     ports:

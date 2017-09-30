@@ -43,6 +43,8 @@ var (
 )
 
 func main() {
+	time.Sleep(time.Second * 10)
+
 	e := echo.New()
 
 	t := &Template{
@@ -57,11 +59,7 @@ func main() {
 	ctx := context.Background()
 
 	var err error
-	esClient, err = elastic.NewClient(
-		elastic.SetBasicAuth(getEnv("ESUSER"), getEnv("ESPASS")),
-		elastic.SetURL(getEnv("ESURL")),
-		elastic.SetSniff(false),
-	)
+	esClient, err = elastic.NewClient(elastic.SetURL("http://elasticsearch:9200"))
 	if err != nil {
 		panic(err)
 	}
